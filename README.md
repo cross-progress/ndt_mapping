@@ -60,6 +60,56 @@ rosrun pcl_ros pointcloud_to_pcd input:=/ndt_map prefix:=map
 
 ### Matching
 
+### Usage I (<span style="color:green"> recommended </span>)
+
+Set the input map name and point cloud topic name in ndt_matching_combined.launch (Default: Map:map.pcd,  PointClound: /points_raw)
+
+You can also change the ndt parameters such as max_iter and ndt_res in ndt_matching_combined.launch.
+
+
+####  <span style="color:cyan"> ~ ndt_matching_combined.launch ~ </span> 
+``` xml
+<launch>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find ndt_mapping)/config/matching.rviz"/>
+    <node pkg="tf" type="static_transform_publisher" name="velodyne" args="0 0 0 0 0 0 base_link velodyne 100" />
+    <node pkg="ndt_mapping" name="map_loader" type="map_loader" output="screen">
+        <param name="map_path" value="$(find ndt_mapping)/map/map.pcd"/>
+    </node>
+    <node pkg="ndt_mapping" name="voxel_grid_filter" type="voxel_grid_filter" output="screen">
+        <param name="points_topic" value="/points_raw"/>
+        <param name="voxel_leaf_size" value="2.0"/>
+        <param name="measurement_range" value="200"/>
+    </node>    
+    <node pkg="ndt_mapping" type="ndt_matching" name="ndt_matching" output="screen">
+        <param name="max_iter_" value="50"/>
+        <param name="ndt_res_" value="5.0"/>
+        <param name="step_size_" value="0.1"/>
+        <param name="trans_eps_" value="0.01"/>
+    </node>
+    <arg name="leaf_size" default="0.5" />
+</launch>
+```
+
+
+run the following command to load map and start ndt_matching
+
+```
+roslaunch ndt_mapping ndt_matching_combined.launch
+```
+
+
+run the following command or directly set the initial point by using rviz  (use "2D Pose Estimate" to select the initial point)
+
+```
+rostopic pub /initialpose geometry_msgs/PoseWithCovarianceStamped '{header:{frame_id: "map"},pose: {pose: {position: {x: 0, y: 0, z: 0}, orientation: {z: 0, w: 1}}}}'
+```
+
+
+
+
+
+### Usage II (<span style="color:red"> you need to do a point downsampling by yourself </span>)
+
 ```
 rviz -d src/ndt_mapping/config/matching.rviz
 ```
@@ -76,6 +126,3 @@ rostopic pub /initialpose geometry_msgs/PoseWithCovarianceStamped '{header:{fram
 ```
 rosrun pcl_ros pcd_to_pointcloud map_0.pcd /cloud_pcd:=/points_map _frame_id:=map
 ```
-
-
-
